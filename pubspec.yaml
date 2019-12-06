@@ -25,6 +25,8 @@ dependencies:
   cupertino_icons: ^0.1.2
 
   graphql_flutter: ^2.1.1-beta.4
+  graphql: ^2.1.1-beta.4
+
 
 dev_dependencies:
   flutter_test:
