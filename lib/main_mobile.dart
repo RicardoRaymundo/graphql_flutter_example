@@ -8,7 +8,7 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final HttpLink httpLink = HttpLink(uri: "http://192.168.0.10:4000/");
+    final HttpLink httpLink = HttpLink(uri: "http://192.168.15.23:4000/");
     final ValueNotifier<GraphQLClient> client = ValueNotifier<GraphQLClient>(
       GraphQLClient(
         link: httpLink,
@@ -50,6 +50,25 @@ class _HomePageState extends State<HomePage> {
                     }
                   """;
 
+  final String queryBook = r"""
+                    query MyQuery {
+                      books {
+                        author
+                        title
+                      }
+                    }
+
+                  """;
+
+  final String createBook = r"""
+                    mutation createBook($author: String!, $title: String!) {
+                      createBook(author: $author, title: $title) {
+                        author
+                        title
+                      }
+                    }
+                  """;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,7 +76,7 @@ class _HomePageState extends State<HomePage> {
         title: Text('GraphQL para Flutter'),
       ),
       body: Query(
-        options: QueryOptions(documentNode: gql(query)),
+        options: QueryOptions(documentNode: gql(queryBook)),
         builder: (
           QueryResult result, {
           Refetch refetch,
@@ -68,14 +87,43 @@ class _HomePageState extends State<HomePage> {
           }
           print(result.data);
           // print(result.data['continents'].toString());
-          return ListView.builder(
-            itemBuilder: (BuildContext context, int index) {
-              print(result.data['users'][index]['name']);
-              return ListTile(
-                title: Text(result.data['users'][index]['name']),
-              );
-            },
-            itemCount: result.data['users'].length,
+          return Column(
+            children: <Widget>[
+              Mutation(
+                options: MutationOptions(
+                  documentNode: gql(createBook), // this is the mutation string you just created
+                  // you can update the cache based on results
+                  update: (Cache cache, QueryResult result) {
+                    return cache;
+                  },
+                  // or do something with the result.data on completion
+                  onCompleted: (dynamic resultData) {
+                    print(resultData);
+                  },
+                ),
+                builder: (RunMutation runMutation,
+                    QueryResult result,) {
+                  return RaisedButton(
+                    onPressed: () {
+                      runMutation({"author": "Israel", "title": "ZZZZZZZZZZ"});
+                    },
+                    child: Text('Mutation'),
+                  );
+                },
+              ),
+              Container(
+                height: 200,
+                child: ListView.builder(
+                  itemBuilder: (BuildContext context, int index) {
+                    print(result.data['books'][index]['title']);
+                    return ListTile(
+                      title: Text(result.data['books'][index]['title']),
+                    );
+                  },
+                  itemCount: result.data['books'].length,
+                ),
+              ),
+            ],
           );
         },
       ),
